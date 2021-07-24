@@ -27,7 +27,7 @@ pd.set_option('display.max_columns', 44)
 pd.set_option('display.width', 10000)
 
 # Import a CSV file into a Pandas DataFrame
-df = pd.read_csv("C:/Users/laura/Documents/Data_Analytics_Marketing/Project/MoviesOnStreamingPlatforms.csv")
+df = pd.read_csv("dataset/MoviesOnStreamingPlatforms.csv")
 print(df.head(10))
 print(df.info())
 print(df.describe())
@@ -280,49 +280,49 @@ print(df.columns)
 
 #MACHINE LEARNING
 # Boosting
-df_b = df.copy()
-label_encoder = LabelEncoder()
-df_b['Directors'] = label_encoder.fit_transform(df['Directors'])
-df_b['Genres'] = label_encoder.fit_transform(df['Genres'])
-df_b['Country'] = label_encoder.fit_transform(df['Country'])
-df_b['Language'] = label_encoder.fit_transform(df['Language'])
-df_b['IMDb'] = df_b['IMDb'].astype('int')
-print(df_b.head(10))
-df_xgboost = df_b[['Directors', 'Genres', 'Country', 'Language','Year', 'Runtime', 'IMDb',
-                  'Action', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime',
-                  'Documentary', 'Drama', 'Family', 'Fantasy', 'Film-Noir', 'Game-Show',
-                  'History', 'Horror', 'Music', 'Musical', 'Mystery', 'News', 'Reality-TV',
-                  'Romance', 'Sci-Fi', 'Short', 'Sport', 'Talk-Show', 'Thriller', 'War', 'Western']]
-
-x = df_xgboost.drop(labels='IMDb', axis=1)
-y = df_xgboost['IMDb']
-scaler=StandardScaler()
-scaled_data=scaler.fit_transform(x)
-train_x,test_x,train_y,test_y=train_test_split(scaled_data,y,test_size=0.3,random_state=42)
-# fit model no training data
-model = XGBClassifier(objective='multi:softmax', num_class=11)
-model.fit(train_x, train_y)
-# cheking training accuracy
-y_pred = model.predict(train_x)
-predictions = [value for value in y_pred]
-accuracy_1 = accuracy_score(train_y,predictions)
-print(accuracy_1)
-# cheking initial test accuracy
-y_pred = model.predict(test_x)
-predictions = [round(value) for value in y_pred]
-accuracy_2 = accuracy_score(test_y,predictions)
-print(accuracy_2)
-print(test_x[0])
-param_grid = {
-
-    'learning_rate': [1, 0.5, 0.1, 0.01, 0.001],
-    'max_depth': [3, 5, 10, 20],
-    'n_estimators': [10, 50, 100, 200]
-
-}
-grid= GridSearchCV(XGBClassifier(objective='multi:softmax', num_class=11),param_grid, verbose=3)
-grid.fit(train_x,train_y)
-print(grid.best_params_)
+# df_b = df.copy()
+# label_encoder = LabelEncoder()
+# df_b['Directors'] = label_encoder.fit_transform(df['Directors'])
+# df_b['Genres'] = label_encoder.fit_transform(df['Genres'])
+# df_b['Country'] = label_encoder.fit_transform(df['Country'])
+# df_b['Language'] = label_encoder.fit_transform(df['Language'])
+# df_b['IMDb'] = df_b['IMDb'].astype('int')
+# print(df_b.head(10))
+# df_xgboost = df_b[['Directors', 'Genres', 'Country', 'Language','Year', 'Runtime', 'IMDb',
+#                   'Action', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime',
+#                   'Documentary', 'Drama', 'Family', 'Fantasy', 'Film-Noir', 'Game-Show',
+#                   'History', 'Horror', 'Music', 'Musical', 'Mystery', 'News', 'Reality-TV',
+#                   'Romance', 'Sci-Fi', 'Short', 'Sport', 'Talk-Show', 'Thriller', 'War', 'Western']]
+#
+# x = df_xgboost.drop(labels='IMDb', axis=1)
+# y = df_xgboost['IMDb']
+# scaler=StandardScaler()
+# scaled_data=scaler.fit_transform(x)
+# train_x,test_x,train_y,test_y=train_test_split(scaled_data,y,test_size=0.3,random_state=42)
+# # fit model no training data
+# model = XGBClassifier(objective='multi:softmax', num_class=11)
+# model.fit(train_x, train_y)
+# # cheking training accuracy
+# y_pred = model.predict(train_x)
+# predictions = [value for value in y_pred]
+# accuracy_1 = accuracy_score(train_y,predictions)
+# print(accuracy_1)
+# # cheking initial test accuracy
+# y_pred = model.predict(test_x)
+# predictions = [round(value) for value in y_pred]
+# accuracy_2 = accuracy_score(test_y,predictions)
+# print(accuracy_2)
+# print(test_x[0])
+# param_grid = {
+#
+#     'learning_rate': [1, 0.5, 0.1, 0.01, 0.001],
+#     'max_depth': [3, 5, 10, 20],
+#     'n_estimators': [10, 50, 100, 200]
+#
+# }
+# grid= GridSearchCV(XGBClassifier(objective='multi:softmax', num_class=11),param_grid, verbose=3)
+# grid.fit(train_x,train_y)
+# print(grid.best_params_)
 
 #Now to increase the accuracy of the model, we'll do hyperparameter tuning using grid search
 
