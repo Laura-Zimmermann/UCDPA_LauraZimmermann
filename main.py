@@ -18,7 +18,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.impute import SimpleImputer
-import seaborn as sns
+
+
 
 # IMPORTING DATASET
 pd.set_option('display.max_rows', 5000)
@@ -42,7 +43,7 @@ print(df['Rotten Tomatoes'])
 # Replacing missing values or dropping duplicates
 # Fill Nan of Directors Column
 df['Directors'].fillna("Unknown Director", inplace=True)
-# print(df['Directors'].value_counts())
+print(df['Directors'].value_counts())
 
 # Replace missing values of Age Column
 # Use functions from Numpy or Scipy
@@ -52,7 +53,7 @@ df.isna().sum()
 
 # Fill Nan of Language Column
 df['Language'].fillna("Other", inplace=True)
-# print(df['Language'].value_counts())
+print(df['Language'].value_counts())
 
 # Replace Nan of Runtime Column with the median
 df['Runtime'].fillna(df['Runtime'].median(), inplace=True)
@@ -66,6 +67,9 @@ print(Null_2)
 print(df.shape)
 
 # USING REGEX
+# total of Directors starting with C
+C = df[df['Directors'].str.count(r'(^C.*)') > 0]
+print('There are {} directors whose names start with the letter C'.format(C['Directors'].count()))
 # Finding all directors names that contain LlrR using Regex. Reason to choose this is because my initials are LR
 regex = r"[^,]*[lLrR][^,]*(,[^,]*[lLrR][^,]*)*"
 
@@ -99,11 +103,13 @@ def splitting(dataframe, col):
     return split
 
 genres = splitting(df, 'Genres')
+unique_lang = splitting(df, 'Language')
 print(genres)
 
 # Merge dataframes
 df = pd.concat([df, genres], axis=1, sort=False)
 print(df.columns)
+
 
 # Use a Dictionary or Lists to store Data
 genre_list = list(df['Genres'].dropna().str.strip().str.split(","))
@@ -111,10 +117,15 @@ flat_genre_list = []
 for sublist in genre_list:
     for item in sublist:
         flat_genre_list.append(item)
-print(set(flat_genre_list))
+genre_set = set(flat_genre_list)
+count_genre = 0
+for genre_item in flat_genre_list:
+    if genre_item in genre_set:
+        count_genre +=1
+print(count_genre)
 
 ### VISUALIZATION, ANALYSIS
-# Want yo know the number of movies with IMDB score 7.5+ in each streaming platform
+# Want to know the number of movies with IMDB score 7.5+ in each streaming platform
 netflix_films = df.loc[df['Netflix'] == 1].drop(['Hulu', 'Prime Video', 'Disney+', 'Type'], axis=1)
 hulu_films = df.loc[df['Hulu'] == 1].drop(['Netflix', 'Prime Video', 'Disney+', 'Type'], axis=1)
 prime_films = df.loc[df['Prime Video'] == 1].drop(['Netflix', 'Hulu', 'Disney+', 'Type'], axis=1)
@@ -123,6 +134,7 @@ disney_films = df.loc[df['Disney+'] == 1].drop(['Netflix', 'Hulu', 'Prime Video'
 count_imdb = [len(netflix_films[netflix_films['IMDb'] > 7.5]), len(hulu_films[hulu_films['IMDb'] > 7.5]),
               len(prime_films[prime_films['IMDb'] > 7.5]), len(disney_films[disney_films['IMDb'] > 7.5])]
 
+# Want to know the number of movies with Rotten Tomatoes score 75+ in each streaming platform
 count_rotten = [len(netflix_films[netflix_films['Rotten Tomatoes'] > 75]), len(hulu_films[hulu_films['Rotten Tomatoes'] > 75]),
               len(prime_films[prime_films['Rotten Tomatoes'] > 75]), len(disney_films[disney_films['Rotten Tomatoes'] > 75])]
 platform = ['Netflix', 'Hulu', 'Prime Video', 'Disney+']
@@ -141,7 +153,7 @@ fig_2 = px.bar(top_rated_rotten, x='Platforms', y='Count', color='Platforms', co
                title='Number of Rotten Tomatoes Score 75%+ Movies on each streaming platform', color_discrete_map= {'Netflix': 'red','Hulu': 'lawngreen', 'Prime Video': 'cornflowerblue','Disney+': 'darkblue'})
 fig_2.show()
 
-# Want to show top 5 Movies on each Platforms
+# Want to show top 5 Movies on each streaming platform
 net = netflix_films.sort_values('IMDb', ascending=False).head(5)
 hulu = hulu_films.sort_values('IMDb', ascending=False).head(5)
 prime = prime_films.sort_values('IMDb', ascending=False).head(5)
@@ -178,7 +190,7 @@ fig = px.bar(x=index, y=values, height=400, color=index,
 fig.show()
 
 
-# Want to show the percentage number of movies on each platform
+# Want to show the percentage number of movies on each streaming platform
 def val_sum(r, c):
     return df[c].sum(axis=0)
 
@@ -197,52 +209,25 @@ fig = go.Figure(data=[go.Pie(labels=labels, values=df_counts, hole=.5)])
 fig.update_layout(title_text='All platforms - Number of movies')
 fig.show()
 
-# Want to show the total number of movies by each Genre
-def splitting(dataframe, col):
-    result = dataframe[col].str.get_dummies(',')
-    return result
-
-unique_genres = splitting(df, 'Genres')
-unique_lang = splitting(df, 'Language')
-
-new_movies = pd.concat([df, unique_genres], axis=1)
-
-def val_sum(r, c):
-    return unique_genres[c].sum(axis=0)
-
-unique_counts = []
-row = [unique_genres]
-col = [unique_genres.columns]
-
-for x in row:
-    for y in col:
-        unique_counts.append(val_sum(x, y))
-
+# Want to show the total number of movies by Genre
 plt.figure(figsize=(20, 10))
-unique_genres.sum().sort_values(ascending=False).plot(kind="bar", color="magenta")
+genres.sum().sort_values(ascending=False).plot(kind="bar", color="magenta")
 plt.ylabel('Genres')
 plt.xlabel('Movies - Total Number')
 plt.title('Movies - Genres')
-plt.show()
+# plt.show is blocking the rest of the code to run hence I have decided to comment it out otherwise the code won't run
+# plt.show()
 
-# Want to know the total number of Movies by year
-last_40_yrs_movies = new_movies[new_movies['Year']>=1980]
-print(last_40_yrs_movies.head(10))
+# Want to know the total number of Movies by year since 1980
+year_count = df.groupby('Year')['Title'].count()
+year_movie = df.groupby('Year')[['Netflix','Hulu','Prime Video','Disney+']].sum()
+year_data = pd.concat([year_count,year_movie],axis=1).reset_index().rename(columns={'Title':'Movie Count'})
+year_data_80 = year_data[year_data['Year']>=1980]
 
-movies_by_year = new_movies.groupby('Year')['Title'].count().reset_index().rename(columns={
-    'Title': 'Movies - Total Number'
-})
-
-fig = px.bar(movies_by_year, y='Year', x='Movies - Total Number', color='Movies - Total Number', orientation='h',
-             title='1900 to 2020 total number of movies')
+fig = px.bar(year_data_80,x='Year',y='Movie Count',hover_data=['Netflix','Hulu','Prime Video','Disney+'],
+             color='Movie Count',color_continuous_scale='Sunsetdark',title='Movie Count By Year')
 fig.show()
 
-# Want to show the Top 20 Directors by Number of Movie Titles
-
-sns.catplot(data=df_directors, kind='swarm', x='Directors', y='Title', hue='Directors')
-plt.show()
-
-print(df.head(10))
 
 # Drop Rotten Tomatoes,Unnamed: 0  column, has too many Nan
 df = df.drop(['Rotten Tomatoes', 'Unnamed: 0'], axis=1)
@@ -270,7 +255,7 @@ distortions = []
 K = range(1,100)
 
 for k in K:
-    kmean = KMeans(n_clusters=k)
+    kmean = KMeans(n_clusters=k, random_state=42, init='k-means++')
     kmean.fit(scaled_data)
     distortions.append(kmean.inertia_)
 fig = px.line(x=K,y=distortions,title='Optimal K from The Elbow Method',
@@ -278,7 +263,7 @@ fig = px.line(x=K,y=distortions,title='Optimal K from The Elbow Method',
 fig.show()
 
 # Kmeans
-cluster = KMeans(n_clusters=21)
+cluster = KMeans(n_clusters=21, random_state=42, init='k-means++')
 predict_group = cluster.fit_predict(scaled_data)
 
 df_tsne = pd.DataFrame(np.column_stack((genre_transform, predict_group, df['Title'], df['Genres'])), columns=['X', 'Y', 'Group', 'Title', 'Genres'])
@@ -391,8 +376,7 @@ rand_clf = RandomForestClassifier(random_state=6)
 rand_clf.fit(X_train,y_train)
 print(rand_clf.score(X_test,y_test))
 
-
-# Tuning three hyperparameters, passing the different values for both parameters
+#Tuning three hyperparameters, passing the different values for both parameters
 grid_param = {
     "n_estimators" : [10,20,50],
     'criterion': ['entropy'],
@@ -448,16 +432,16 @@ print(clf2.score(X_test, y_test))
 rand_clf = RandomForestClassifier(criterion = 'gini',max_depth=10,random_state=42)
 rand_clf.fit(X_train,y_train)
 print(rand_clf.score(X_test,y_test))
-#First test:
-grid_param = {
-    'n_estimators' : [10, 20, 50],
-    'criterion' : ['gini', 'entropy'],
-    'max_depth' : range(2,8,1),
-    'min_samples_split' : [2,4,5],
-    'max_features' : ['auto','log2']
-}
+##First test - I'm comenting this out as the results of the second test were better than the first test.
+# grid_param = {
+#     'n_estimators' : [10, 20, 50],
+#     'criterion' : ['gini', 'entropy'],
+#     'max_depth' : range(2,8,1),
+#     'min_samples_split' : [2,4,5],
+#     'max_features' : ['auto','log2']
+# }
 
-# Best_Params: {'criterion': 'gini', 'max_depth': 7, 'max_features': 'auto', 'min_samples_split': 2, 'n_estimators': 50}
+#These were the Best_Params printed: {'criterion': 'gini', 'max_depth': 7, 'max_features': 'auto', 'min_samples_split': 2, 'n_estimators': 50}
 
 #Second test
 grid_param = {
@@ -483,76 +467,3 @@ rand_clf = RandomForestClassifier(criterion= 'entropy',
 
 rand_clf.fit(X_train, y_train)
 print(rand_clf.score(X_test, y_test))
-
-
-
-
-
-
-
-### GRAVEYARD ###
-# #Split the data for train and test
-# X_train_full, X_test_full, y_train, y_test = train_test_split(X, y,test_size=0.3, random_state=42)
-# #List of Categorical colunmns to be used as features
-# chosen_columns_cat = ['Directors', 'Genres', 'Country', 'Language']
-# #List of Numerical colunmns to be used as features
-# chosen_columns_num = ['Year', 'Runtime']
-#
-# #Keep selected columns only
-# all_chosen_columns = chosen_columns_cat + chosen_columns_num
-# X_train = X_train_full[all_chosen_columns]
-# X_test = X_test_full[all_chosen_columns]
-#
-# print(X_train.head())
-# print(X_test.head())
-#
-# #Copying the data to prevent change in original datset
-# label_X_train = X_train.copy()
-# label_X_test = X_test.copy()label_encoder.transform
-#
-# # Apply label encoder to each column with categorical data
-# label_encoder = LabelEncoder()
-# for col in chosen_columns_cat:
-#     label_encoder.fit(pd.concat([label_X_train[col], label_X_test[col]], axis=0, sort=False))
-#     label_X_train[col] = (label_X_train[col])
-#     label_X_test[col] = label_encoder.transform(label_X_test[col])
-#
-# print(label_X_test[col].head(10))
-
-
-# model_1 = RandomForestRegressor(n_estimators=50, random_state=1)
-# model_2 = RandomForestRegressor(n_estimators=100, random_state=1)
-# model_3 = RandomForestRegressor(n_estimators=100, criterion='mae', random_state=1)
-# model_4 = RandomForestRegressor(n_estimators=200, min_samples_split=20, random_state=1)
-# model_5 = RandomForestRegressor(n_estimators=100, max_depth=7, random_state=1)
-
-# #List of models
-# models = [model_1, model_2, model_3, model_4, model_5]
-#
-#
-# def score_model(model, X_t=label_X_train, X_v=label_X_test, y_t=y_train, y_v=y_test):
-#     model.fit(X_t, y_t)
-#     preds = model.predict(X_v)
-#     return mean_absolute_error(y_v, preds)
-#
-# mae_scores = []
-#
-# for i in range(0, len(models)):
-#     mae = score_model(models[i])
-#     print("Model %d MAE: %f" % (i + 1, mae))
-#     mae_scores.append(mae)
-#
-# best_score=min(mae_scores)
-# print(best_score)
-
-
-# C = df[df['Directors'].str.count(r'(^C.*)') > 0]
-
-# total Directors starting with C
-# print('There are {} directors whose names start with the letter C'.format(C['Directors'].count()))
-
-# Perform predictions using Supervised learning:
-# IMDb Rating Prediction from a data set of Movies: https://www.kaggle.com/diptaraj23/imdb-rating-prediction-from-a-data-set-of-movies
-
-
-# customer behavioural analytics or segmentation
